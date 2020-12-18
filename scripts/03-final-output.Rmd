@@ -14,6 +14,7 @@ output:
 library(tidyverse)
 library(lme4)
 library(kableExtra)
+library("reshape2")
 library("ggplot2")
 setwd("~/Desktop/sta304 final")
 # Loading in the cleaned survey Data
@@ -301,6 +302,8 @@ Elections Canada. (2015). Canada's Federal Electoral Districts. Retrieved from h
 Elections Canada. (2019). Report on the 43rd General Election of October 21, 2019. Retrieved from https://www.elections.ca/res/rep/off/sta_ge43/stat_ge43_e.pdf.
 
 Federal Election Commission. (2017). Election Results for the U.S. President, the U.S. Senate and the U.S. House of Representatives. Washington, D.C.: Federal Election Commission.
+
+Hadley Wickham (2007). Reshaping Data with the reshape Package. Journal of Statistical Software, 21(12), 1-20. URL http://www.jstatsoft.org/v21/i12/.
 
 Harmel, R., & Yeh, Y. Y. (2015). China's age cohorts: differences in political attitudes and behavior. Social Science Quarterly, 96(1), 214-234.
 
