@@ -1,0 +1,340 @@
+---
+title: What would happen if all voters voted? An Analysis of the 2019 Canadian Federal Election Using Multilevel Regression
+  with Post-stratification
+author: "Siyuan Tao"
+date: "2020-12-21"
+output:
+  pdf_document:
+    latex_engine: xelatex
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lme4)
+library(kableExtra)
+library("ggplot2")
+setwd("~/Desktop/sta304 final")
+# Loading in the cleaned survey Data
+survey_data <- read_csv("outputs/survey_data.csv")
+
+# Loading in the cleaned census Data
+census_data <- read_csv("outputs/census_data.csv")
+
+```
+
+# What would happen if all voters voted? An Analysis of the 2019 Canadian Federal Election Using Multilevel Regression with Post-stratification
+
+## Siyuan Tao
+## 2020-12-21
+
+Code and data supporting this analysis is available at:
+
+# Abstract
+
+In 2019, the Canadian federal election occurred to elect the 338 seats of the House of Commons (Perrault, 2020). The Conservative won 121 seats, and the Liberal won 157 seats, making a new Liberal minority government. However, not every registered voter voted during the election. Based on Elections Canada (2020), there were 27 million registered voters, but only 18 million people voted. What would happen if all voters voted? This report investigates the question by using a multilevel regression model with post-stratification. The report first builds two multilevel regression models to predict the proportion of people who would vote for the Liberal and the Conservative using the 2019 Canadian Election Study dataset (Stephenson et al.,2020). The report then makes post-stratification to estimate the number of seats each party would get in each province using the 2016 Canadian Census (Statistics Canada, 2019). Based on the models and calculations, the report predicts that the Liberal would get 118.0577 seats, and the Conservative would get 108.4402 seats. No party would get 170 seats, and the government is expected to be a minority government. More importantly, the analysis shows that big parties would not benifit when all voters voted, but small parties would get more seats and be more powerful in that situation. The analysis has some limitations. First, the variables used to build the models may not be enough. Besides, the report focuses on the popular vote results in each province instead of each riding to predict the election's outcome, which may be less accurate. In addition, the analysis only focuses on the Liberal and the Conservative. Future studies could build models for other parties with more variables, using the popular votes in each riding in order to get a more accurate prediction.
+
+## Key words
+
+2019 Canadian election, Liberal, Conservative, multilevel regression, post-stratification.
+
+# Introduction
+
+On October 21, 2019, the 43rd Canadian federal election took place. During that election, candidates were competing for the 338 seats of the House of Commons (Perrault, 2020). As a result, the Liberal won 157 seats, the Conservative won 121 seats, the Bloc Québécois won 32 seats, the New Democrat won 24 seats, the Green won 3 seats, and the Independent won 1 seat (CBC News, 2019). Even though the Liberal won the most seats, it did not win the majority seats of the 338 total seats, which made the government become a Liberal minority government (CBC News, 2019). One interesting thing about the election was that there were about 27.3 million registered voters. However, only two third of them, about 18 million of them were actually voted for the election (Elections Canada, 2020). What would happen if all qualified voters voted for the election? Would the Liberal get enough seats to make the government become a Liberal majority government in that situation?
+
+To answer this question, appropriate statistical models need to be built to predict the election results when all voters voted. One popular way to forecast an election's outcome is the multilevel regression with post-stratification (Wang et al., 2014). This method allows accurate election forecasts through non-representative sample data by adjusting the sample data corresponding to census data (Wang et al., 2014). Even though the representative samples used in traditional forecasts are also accurate, it could be time-consuming and costly to collect such representative data. Thus, this report will apply the multilevel regression with the post-stratification method, using a non-representative sample to estimate the 2019 Canadian federal election's result if all voters voted.
+
+Two data sets will be used in this report to predict the result of the 2019 Canadian federal election if all qualified voters participated. The first one is the survey data, 2019 Canadian Election Study, which is conducted by Stephenson and coworkers (2020). The census data used in the report comes from the 2016 Canadian Census conducted by Statistics Canada (2019). This report contains several sections, including Methodology, Results, and Discussion. In the Methodology section, the report will discuss the two datasets in detail, the multilevel regression model, which is built based on the sample data, and the post-stratification calculations based on the model and the census data. Results of the post-stratification analysis and any relevant tables will be presented in the Results section. In the Discussion section, the report will analyze the meaning of the results, draw conclusions from the analysis, and illustrate the analysis's limitations and future directions.
+
+# Methodology
+
+## Data
+
+In order to conduct a multilevel regression with post-stratification analysis, two datasets are required. One is a survey dataset, which can be non-representative data with relatively small sample size. Another is a census dataset, which should be large and contain enough information to adjust the non-representative sample data. 
+
+The survey data used in the report comes from the 2019 Canadian Election Study (Stephenson et al.,2020). The dataset was chosen because it contains some critical information to predict people's voting preferences. For example, the dataset includes people's sex, age, family incomes, education level, province lived, and places born, which are showed to have an effect on people's political view and influence their voting preference by previous studies (Pratto, Stallworth & Sidanius, 1997; Harmel & Yeh, 2015; Patterson & Caldeira, 1983; Federal Election Commission, 2017; Lien, 2004). One problem associated with the data is that the dataset was collected through a non-probability online survey. Thus, not all people have an equal chance to be selected. For example, people who are older and less likely to use computers may not be selected. Therefore, the sample data is relatively non-representative data, and we want to use census data to adjust this and make more accurate predictions. Below is the head part of the survey data and the summary of participants' voting results. We can see that 36.2% of the sample voted for the Liberal, and 33.0% of the sample voted for the Conservative.
+```{r, echo=FALSE}
+kbl(head(survey_data), booktabs = T, caption = "Survey data table (Head)") %>% 
+  kable_styling(latex_options = c("striped", "scale_down", "hold_position"))
+kbl(summary(survey_data), caption = "Survey data summary", booktabs = T) %>% 
+  kable_styling(latex_options = c("striped", "scale_down", "hold_position"))
+```
+
+
+The census data used in the report is the 2016 Canadian Census data (Statistics Canada, 2019). It represents a 2.7% sample of the Canadian population (Statistics Canada, 2019). We choose this dataset because of several reasons. First, it is large and contains 930,421 observations. This large size allows us to make a more accurate post-stratification calculation. Second, the variables in the census data match the variables in the survey data. For example, sex, age, family incomes, education level, province lived, and places born can all be found in the census data. This is important because the multilevel regression with post-stratification requires the two datasets have matched variables and variable levels. Below is the head part of the census data.
+```{r, echo=FALSE}
+kbl(head(census_data), caption = "Census data table (Head)", booktabs = T) %>% 
+  kable_styling(latex_options = c("striped", "scale_down", "hold_position"))
+```
+
+## Model
+
+This section will discuss the multilevel regression models and post-stratification calculations. Before talking about the models, there are some clarifications.
+
+First, in Canada, the result of the election does not base on the result of the popular vote but base on a electoral system called riding. This system divides Canada into 338 federal electoral districts or ridings in total, and each riding will return one candidate to the House of Commons based on the voting result in that riding (Elections Canada, 2015). Thus, the analysis need to focus on the voting results in the 338 ridings. However, it is hard to find a census data that contains voting riding information. Therefore, this report will assume that the total results of ridings within one province will approximately equal to the popular vote results in that province. For example, there are 34 ridings in Alberta. If the Liberal got 30% of the popular vote in Alberta, the report will assume that the Liberal got 10.2 seats in Alberta without focusing on the voting results of the 34 ridings. 
+
+Second, during the election, candidates from multiple parties competed for the 338 seats of the House of Commons. So the model should focus on the party distribution among the 338 seats, rather than focusing on one single winner like the presidential election. However, even though there are multiple parties, two parties are the majority of the election: the Liberal and the Conservative. Thus, to better predict the outcome of the 2019 election, we decided to build two multilevel regression models. One model will focus on the Liberal, and the post-stratification will calculate the estimated number of seats the Liberal would win if all people voted. The other model will focus on the Conservative and predict the number of seats the Conservative would win.
+
+### Model Specifics
+
+We will built two multilevel logistic regression models to predict the proportion of people who will vote for the Liberal and the Conservative. We want to use logistic regression models because whether to vote for one party is a binary variable. For example, there are only two possible outcomes for whether to vote for the Liberal:
+
+\begin{equation}
+Y = 
+\begin{cases} 
+1 & \text{if voting for the Liberal} \\
+0        & \text{Otherwise}
+\end{cases}
+\end{equation}
+
+Similarly, there are only two possible outcomes for whether to vote for the Conservative:
+\begin{equation}
+Y = 
+\begin{cases} 
+1 & \text{if voting for the Conservative} \\
+0        & \text{Otherwise}
+\end{cases}
+\end{equation}
+
+Here, we are going to use the six variables discussed above to build the multilevel logistic regression models. The six variables include age, sex, household income, education level, province lived, and places born. We are going to use R (R Core Team, 2019), and packages tidyverse (Wickham et al., 2019), lme4 (Bates et al., 2015) to build the model. After applying these variables, our models are:
+
+\begin{align}
+Pr(Y_{i} = Liberal) = logit^{-1}(\alpha_{0} + \alpha^{age}_{j[i]} +\alpha^{sex}_{j[i]} +\alpha^{income}_{j[i]}+ \alpha^{education}_{j[i]} + \alpha^{province}_{j[i]} +\alpha^{born-place}_{j[i]})
+\end{align}
+
+and
+\begin{align}
+Pr(Y_{i} = Conservative) = logit^{-1}(\beta_{0}+ \beta^{age}_{j[i]} +\beta^{sex}_{j[i]} +\beta^{income}_{j[i]}+ \beta^{education}_{j[i]} + \beta^{province}_{j[i]} +\beta^{born-place}_{j[i]})
+\end{align}
+
+where $\alpha_{0}$ and $\beta_{0}$ are the fixed baseline intercepts for these two models. The notaions $\alpha^{age}_{j[i]}$,  $\alpha^{sex}_{j[i]}$, $\alpha^{income}_{j[i]}$, and so on, correspond to the varying coefficients linked to each categorical variable. Besides, the notations $j[i]$ shows that individual i belongs to the $j_{th}$ group for that categorical variable. For example, there are four groups in $\alpha^{age}_{j[i]}$, which are {$\alpha^{age}_{0-29}$, $\alpha^{age}_{30-44}$, $\alpha^{age}_{45-64}$, $\alpha^{age}_{65+}$}. Thus, $\alpha^{age}_{j[i]}$ could indicate which age group the individual i comes from. This is similar to other $\alpha$s and $\beta$s. 
+
+One thing to notice is that all variables used in these two models are categorical variables. Thus, within each level of these categorical variables, people may have similar responses. So we choose to build random intercept models based on these categorical variables to get a more accurate prediction. 
+
+```{r, include=FALSE}
+
+# Creating the Model
+model_liberal <- glmer(vote_liberal ~ (1|age) + (1|sex)  + (1|education) + (1|place_birth_canada) +
+                         (1|income_family) + (1|province), data = survey_data, family = binomial)
+
+# Model Results (to Report in Results section)
+
+model_liberal_summary <- summary(model_liberal)
+
+```
+```{r, include=FALSE}
+
+# Creating the Model
+model_cons <- glmer(vote_conservative ~ (1|age) + (1|sex)  + (1|education) + (1|place_birth_canada) +
+                      (1|income_family) + (1|province), data = survey_data, family = binomial)
+
+# Model Results (to Report in Results section)
+
+model_cons_summary <- summary(model_cons)
+
+```
+
+
+### Post-Stratification 
+
+After getting the multilevel regression models, we want to do a post-stratification calculation to estimate the proportion of people who would vote for the two parties in the population based on their different demographic features. The basic process of post-stratification is to divide the population into small cells based on different demographic characteristics such as age and sex, then calculate the estimates in each cell, and finally weight each cell and calculate a weighted mean of these estimates to obtain an accurate estimate of the population level (Wang et al., 2014). 
+
+Here, we divide people into different cells based on the six variables discussed above: age, sex, household income, education level, province lived, and places born. For example, one cell could be females between 0 to 29 years old, born in Canada, living in Newfoundland and Labrador, with less than a high school diploma or equivalent and less than $25,000 household income. In the census data, there are 33 participants whose demographic features fall into that specific cell.
+
+After applying the multilevel regression models to the census data, we get the estimated proportion of people who would vote for the Liberal or the Conservative in each cell. In the report, we assume that the election result is based on the popular vote in each province. Thus, to predict the result of the election, we group these cells based on the provinces and calculate two post-stratification estimates for each province, $\hat{y}^{PS}_{j}$, by summing these products of all cells in the same province and dividing it by the total population size in that province:
+\begin{equation}
+\hat{y}_{j}^{PS} = \frac{\sum{N}_{j}\hat{y}_{i}}{\sum{N}_{j}}
+\end{equation}
+
+Here, each province's post-stratification estimate predicts the proportion of people who would vote for the Liberal or the Conservative in that province.
+
+Then, we multiply the post-stratification estimate for each province for the two parties by the number of seats in each province to estimate the total number of seats each party would get if all voters voted during the election. For example, if the post-stratification estimate for the Liberal in Ontario were 0.58, we would expect that 58% of people in Ontario would vote for the Liberal. Because there are 121 seats in Ontario, we would expect that the Liberal would win $121*0.58=70.18$ seats in Ontario.
+
+```{r, include=FALSE}
+# Here I will perform the post-stratification calculation
+census_data$logodds_estimate_liberal <-
+  model_liberal %>%
+  predict(newdata = census_data)
+
+census_data$estimate_liberal <-
+  exp(census_data$logodds_estimate_liberal)/(1+exp(census_data$logodds_estimate_liberal))
+
+census_data <- census_data %>%
+  mutate(lib_predict_prop = estimate_liberal*n) 
+table_lib <- census_data %>%
+  group_by(province) %>%
+  summarise("predicted winning proportion" = sum(lib_predict_prop)/sum(n))
+table_lib$seats <- c(34, 42, 14, 10, 7, 3, 11, 121, 4, 78, 14)
+table_lib$"seats for the Liberal" <- table_lib$"predicted winning proportion"*table_lib$seats
+
+```
+```{r, include=FALSE}
+# Here I will perform the post-stratification calculation
+census_data$logodds_estimate_cons <-
+  model_cons %>%
+  predict(newdata = census_data)
+
+census_data$estimate_cons <-
+  exp(census_data$logodds_estimate_cons)/(1+exp(census_data$logodds_estimate_cons))
+
+table_cons <- census_data %>%
+  mutate(cons_predict_prop = estimate_cons*n) %>%
+  group_by(province) %>%
+  summarise("predicted winning proportion" = sum(cons_predict_prop)/sum(n))
+table_cons$seats <- c(34, 42, 14, 10, 7, 3, 11, 121, 4, 78, 14)
+table_cons$"seats for the Conservative" <- table_cons$"predicted winning proportion"*table_cons$seats
+```
+
+
+# Results
+
+In the previous section, we use six variables including age, sex, household income, education level, provinces lived, and places born to build two multilevel regression models for the Liberal and the Conservative. The detail of the two models will be present in the Appendix. By applying the census data to the multilevel regression models and calculating the post-stratifications, we get the predicted proportion of people who would vote for the Liberal or the Conservative in each province, which is also the predicted popular vote results in each province. Then, we get the number of seats the two parties could win by multiplying the proportion by each province's total number of seats. Table 4 shows the estimated number of seats the Liberal could win in each province if all voters voted. Table 5 shows the estimated number of seats the Conservatives could win in each province if all voters voted. By combining these two tables, we can visualize the results using package ggplot2 (Wickham, 2016). The result is shown in Figure 1.
+
+```{r, echo=FALSE}
+kbl(table_lib, caption = "Predicted results for the Liberal", booktabs = T) %>% 
+  kable_styling(latex_options = c("striped", "hold_position"))
+```
+```{r, echo=FALSE}
+kbl(table_cons, caption = "Predicted results for the Conservative", booktabs = T) %>% 
+  kable_styling(latex_options = c("striped", "hold_position"))
+```
+
+```{r, echo=FALSE}
+table <- data.frame(Province=table_lib$province, Liberal=table_lib$"seats for the Liberal",
+                    Conservative=table_cons$"seats for the Conservative")
+test_data_long <- melt(table, id="Province")  # convert to long format
+
+ggplot(data=test_data_long,
+       aes(x=Province, y=value, colour=variable)) +
+       geom_point() +
+  labs(title = "Figure 1: Estimated number of seats for two parties",x = "Province", y="Estimated number of seats", colour= "") +
+  coord_flip() +
+  theme(axis.title = element_text(size = rel(2)),
+        axis.text = element_text(size = 8),
+        axis.title.y = element_text(size = 10),
+        axis.title.x = element_text(size = 10))
+
+
+```
+
+Figure 1 shows that the estimated number of seats won by these two parties are similar in most provinces. Significant differences are shown in Saskatchewan, Quebec, Ontario, and Alberta. In Saskatchewan and Alberta, the Conservative is expected to win more seats than the Liberal; while in Quebec and Ontario, the Liberal is expected to win more seats. 
+
+We also want to compare our prediction with the real outcome. Figure 2 demonstrates the comparison between the estimated number of seats and the real number of seats the Liberal got in each province. Figure 3 demonstrates the similar comparison for the Conservative. We can see that the major differences happen in the same four provinces, whcih are Saskatchewan, Quebec, Ontario, and Alberta.
+```{r, echo=FALSE}
+
+table_real_liberal <- data.frame(Province=table$Province, 
+                                 Real=c(0, 11, 4, 6, 6, 2, 10, 79, 4, 35, 0),
+                                 Predicted=table$Liberal)
+test_data_long_lib <- melt(table_real_liberal, id="Province")
+
+ggplot(data=test_data_long_lib,
+       aes(x=Province, y=value, colour=variable)) +
+       geom_point() +
+  labs(title = "Figure 2: Number of seats for the Liberal",x = "Province",
+       y="Number of seats for the Liberal", colour= "") +
+  coord_flip()+
+  theme(axis.title = element_text(size = rel(2)),
+        axis.text = element_text(size = 8),
+        axis.title.y = element_text(size = 10),
+        axis.title.x = element_text(size = 10))
+```
+```{r, echo=FALSE}
+table_real_conservative <- data.frame(Province=table$Province, 
+                                 Real=c(33, 17, 7, 3, 0, 0, 1, 36, 0, 10, 14),
+                                 Predicted=table$Conservative)
+test_data_long_cons <- melt(table_real_conservative, id="Province")
+
+ggplot(data=test_data_long_cons,
+       aes(x=Province, y=value, colour=variable)) +
+       geom_point() +
+  labs(title = "Figure 3: Number of seats for the Conservative",x = "Province",
+       y="Number of seats for the Conservative", colour= "") +
+  coord_flip()+
+  theme(axis.title = element_text(size = rel(2)),
+        axis.text = element_text(size = 8),
+        axis.title.y = element_text(size = 10),
+        axis.title.x = element_text(size = 10))
+```
+
+Finally, by adding up the estimated number of seats in each province, we get the total predicted number of seats the Liberal and the Conservative would win in the 2019 Canadian election if all voters voted. Table 6 demonstrates the predicted results for the 2019 Canadian election. Based on the multilevel regression models and post-stratification, the Liberal is expected to get 118.0577 seats, and the Conservative is expected to get 108.4402 seats if all voters voted. 
+
+```{r, echo=FALSE}
+summary_table <- data.frame(Liberal=sum(table_lib$`seats for the Liberal`),
+                            Conservative=sum(table_cons$`seats for the Conservative`))
+kbl(summary_table, caption = "Predicted results for the 2019 Canadian election", booktabs = T) %>% 
+  kable_styling(latex_options = c("striped", "hold_position"))
+```
+
+# Discussion
+
+In 2019, the 43rd Canadian federal election took place to elect the 338 members of the House of Commons (Perrault, 2020). The Liberal won 157 seats, and the Conservative won 121 seats (CBC News, 2019). Because the Liberal did not win half of the 338 seats, the government became a Liberal minority government. There were 27 million registered voters during the election, but only 18 million voted (Elections Canada, 2020). The report illustrates the expected results of the 2019 Canadian federal election if all registered voters voted. The report first built two multilevel regression models based on the 2019 Canadian Election Study (Stephenson et al.,2020). The two models predict the proportion of voters who would vote for the Liberal or the Conservative using categorical variables including age, sex, household income, education level, province lived and place born. The report then did post-stratification calculations to predict the popular vote results in each province for the Liberal and the Conservative using the 2016 Canadian Census data (Statistics Canada, 2019). By combining the estimated popular vote results and the number of seats in each province, we got the estimated number of seats won by the Liberal and the Conservative. Finally, after adding up all information, the report predicted that the Liberal would win 118.0577 out of 338 seats, and the Conservative would win 108.4402 out of 338 seats if all voters voted. Therefore, based on the analysis, because all parties' seats are expected to be lower than 170 seats, no party is expected to make a majority government. This means big parties such as the Liberal and the Conservative would not benifit from the situation when all registered voters voted. However, these smaller parties, such as Bloc Québécois and the New Democrat, could gain more seats and be more powerful in the government when all voters voted.
+
+Based on the analysis, the Liberal and the Conservative are expected to get fewer seats if all voters voted than the real condition. More specifically, the Liberal is predicted to get fewer seats in Quebec, Prince Edward Island, Ontario, Nova Scotia, North, Newfoundland and Labrador, and New Brunswick. It is predicted to win more seats in Saskatchewan, Manitoba, British Columbia, and Alberta. The significant difference happens in Ontario, where the Liberal got 79 seats in real but is expected to get only 49 seats (CBC News, 2019). One explanation of why the huge difference happens is that we are using the province's popular vote results to predict the 2019 election instead of using the riding's vote results. There are 121 ridings in Ontario, which is the most in Canada. Thus, the proportion of voting for the Liberal may differ in these smaller ridings from the proportion of voting for the Liberal in the large province. Also, it could be that in Ontario, many people did not vote during the election, thus leading to a different result when assuming everyone had voted. Based on the data from Elections Canada, there were 10 million registered voters in Ontario, but only 6.9 million people voted (Elections Canada, 2020). Thus, the most plausible reason this discrepancy happens is that many people did not vote in Ontario, and because Ontario contains the most seats, insufficient voters' effect becomes significant. 
+
+On the other hand, the Conservative is expected to get fewer seats in Saskatchewan, Manitoba, British Columbia, and Alberta. It is expected to get more seats in Quebec, Prince Edward Island, Ontario, Nova Scotia, North, and Newfoundland and Labrador. The predicted number of seats in New Brunswick is the same as the actual number of seats. For the Conservative, the significant difference occurs in Alberta. The real result indicates that the Conservative won 33 out of 34 seats in Alberta, but based on our model, it is expected to win 21.0353092 seats (CBC News, 2019). Besides, the Liberal is expected to get 6.262650 seats in Alberta. Therefore, the left seven seats are expected to belong to other parties. In reality, the New Democrat won one seat in Alberta (CBC News, 2019). Thus, other parties such as the New Democrat may win the left seven Alberta seats based on our models. However, because we only built two models for the Conservative and the Liberal, we have no other evidence to support this idea. Further studies are required to make models for other parties in order to verify this idea.
+
+## Weaknesses and Next Steps
+
+One limitation of our analysis is that we only use six variables to build these multilevel regression models and divide the census data. We use these variables because multilevel regression with post-stratification requires that the variables be found in both sample and census data. Also, these variables must have the same levels in the two datasets. These six variables, including age, sex, household income, education level, province lived, and places born, are the most relevant six variables we can found that both exist in the sample data and census data we used, which may have a potential effect on people's political views. However, other variables may also potentially impact people's political preferences, such as their voting choices for the last election. Therefore, future studies are required to build multilevel regression models using more variables to get a more precise prediction.
+
+Another limitation is that we assume that each province's popular vote results are equivalent to the vote results in the ridings within that province to simplify the analysis. We have this assumption because we could not find the riding information in the census data, which means we cannot build a multilevel regression model based on the riding regions. However, this might lead to potential bias in the provinces which have numerous ridings, such as Ontario. In that kind of province, the popular vote results may not fully represent the votes in the small ridings. For example, it could be that the Liberal is expected to win 40.72590% of the popular vote in Ontario, but the votes are concentrated in the smaller ridings, which leads to more seats than what our models predicted. Thus, future studies should use data that include information about the riding regions and do the post-stratification for each riding to get a more accurate result. 
+
+Besides, we only built models for the Liberal and the Conservative. To depict a full picture of the 2019 Canadian federal election, future studies could build multilevel regression models for other parties such as the Bloc Québécois, the New Democrat, the Green, and the Independent. After getting the estimated number of seats for these parties, we could get a full picture of the 2019 Canadian election's results when all registered voters voted. 
+
+
+\newpage
+
+# References
+
+Alexander, R., Caetano, S., & Tao, S. (2020) Data cleaning code for survey data. STA304 course materials. University of Toronto, Department of Statistics.
+
+Alexander, R., Caetano, S., & Tao, S. (2020) Data cleaning code for post-stratification data. STA304 course materials. University of Toronto, Department of Statistics.
+
+Bates, D., Maechler, M., Bolker, D., & Walker, D. (2015). Fitting Linear Mixed-Effects Models
+Using lme4. Journal of Statistical Software, 67(1), 1-48. doi:10.18637/jss.v067.i01.
+
+CBC News. (2019). Federal election 2019 live results. Retrieved from https://newsinteractives.cbc.ca/elections/federal/2019/results/
+
+Elections Canada. (2015). Canada's Federal Electoral Districts. Retrieved from https://www.elections.ca/content.aspx?section=res&dir=cir/list&document=index338&lang=e.
+
+Elections Canada. (2019). Report on the 43rd General Election of October 21, 2019. Retrieved from https://www.elections.ca/res/rep/off/sta_ge43/stat_ge43_e.pdf.
+
+Federal Election Commission. (2017). Election Results for the U.S. President, the U.S. Senate and the U.S. House of Representatives. Washington, D.C.: Federal Election Commission.
+
+Harmel, R., & Yeh, Y. Y. (2015). China's age cohorts: differences in political attitudes and behavior. Social Science Quarterly, 96(1), 214-234.
+
+Lien, P. T. (2004). Behind the Numbers: Talking Politics with Foreign‐born Chinese Americans. International Migration, 42(2), 87-112.
+
+Patterson, S. C., & Caldeira, G. A. (1983). Getting out the vote: Participation in gubernatorial elections. The American Political Science Review, 675-689.
+
+Pratto, F., Stallworth, L. M., & Sidanius, J. (1997). The gender gap: Differences in political attitudes and social dominance orientation. British journal of social psychology, 36(1), 49-68.
+
+R Core Team (2019). R: A language and environment for statistical computing. R Foundation
+for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+
+Statistics Canada. (2019). 2016 Census of Population [Canada] Public Use Microdata File (PUMF): Individuals File [public use microdata file]. Ottawa, Ontario: Statistics Canada [producer and distributor].
+
+Stephenson, Laura B., Harell, A., Rubenson, D., & Loewen, Peter J. (2020). 2019 Canadian Election Study - Online Survey. https://doi.org/10.7910/DVN/DUS88V, Harvard Dataverse, V1
+
+Wang, W., Rothschild, D., Goel, S., & Gelman, A. (2015). Forecasting elections with non-representative polls. International Journal of Forecasting, 31(3), 980-991.
+
+Wickham et al., (2019). Welcome to the tidyverse. Journal of Open Source Software, 4(43),
+1686, https://doi.org/10.21105/joss.01686
+
+Wickham, H. (2016). ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York.
+
+Zhu, H. (2020). kableExtra: Construct Complex Table with 'kable' and Pipe Syntax. R package version
+1.3.1. https://CRAN.R-project.org/package=kableExtra
+
+\newpage
+
+# Appendix A: Multilevel regression model for the Liberal
+```{r, echo=FALSE}
+model_liberal_summary
+```
+\newpage
+# Appendix B: Multilevel regression model for the Conservative
+```{r, echo=FALSE}
+model_cons_summary
+```
