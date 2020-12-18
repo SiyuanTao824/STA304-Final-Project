@@ -221,7 +221,7 @@ ggplot(data=test_data_long,
 
 Figure 1 shows that the estimated number of seats won by these two parties are similar in most provinces. Significant differences are shown in Saskatchewan, Quebec, Ontario, and Alberta. In Saskatchewan and Alberta, the Conservative is expected to win more seats than the Liberal; while in Quebec and Ontario, the Liberal is expected to win more seats. 
 
-We also want to compare our prediction with the real outcome. Figure 2 demonstrates the comparison between the estimated number of seats and the real number of seats the Liberal got in each province. Figure 3 demonstrates the similar comparison for the Conservative. We can see that the major differences happen in the same four provinces, whcih are Saskatchewan, Quebec, Ontario, and Alberta.
+We also want to compare our prediction with the real outcome. Figure 2 demonstrates the comparison between the estimated number of seats and the real number of seats the Liberal got in each province. Figure 3 demonstrates the similar comparison for the Conservative. We can see that the major differences happen in the same four provinces, which are Saskatchewan, Quebec, Ontario, and Alberta.
 ```{r, echo=FALSE}
 
 table_real_liberal <- data.frame(Province=table$Province, 
