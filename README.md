@@ -9,6 +9,9 @@ Inputs contain the original data. We used two datasets:
 
 Outputs contain data that are modified from the input data.
 
+- [survey_data.csv](https://github.com/SiyuanTao824/STA304-Final-Project/blob/main/outputs/survey_data.csv)
+- [census_data.csv](https://github.com/SiyuanTao824/STA304-Final-Project/blob/main/outputs/census_data.csv)
+
 Scripts contain R scripts that take inputs and outputs to produce outputs. Scripts also contain the R scripts that we built our model.
 
 - [01-final-data_cleaning-survey.R](https://github.com/SiyuanTao824/STA304-Final-Project/blob/main/scripts/01-final-data_cleaning-survey.R)
